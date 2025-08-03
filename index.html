@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout Bot Setup</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Checkout Bot Setup</h1>
+    <form id="checkoutForm">
+      <section>
+        <h2>Product Details</h2>
+        <input type="text" name="productUrl" placeholder="Product URL" required />
+        <input type="text" name="shoeSize" placeholder="Shoe Size" required />
+      </section>
+
+      <section>
+        <h2>Shipping Info</h2>
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="text" name="firstName" placeholder="First Name" required />
+        <input type="text" name="lastName" placeholder="Last Name" required />
+        <input type="text" name="address1" placeholder="Address Line 1" required />
+        <input type="text" name="city" placeholder="City" required />
+        <input type="text" name="state" placeholder="State (e.g. CA)" required />
+        <input type="text" name="zip" placeholder="ZIP Code" required />
+        <input type="text" name="phone" placeholder="Phone Number" required />
+      </section>
+
+      <section>
+        <h2>Card Info</h2>
+        <input type="text" name="cardNumber" placeholder="Card Number" required />
+        <input type="text" name="expiry" placeholder="Expiry (MM / YY)" required />
+        <input type="text" name="cvc" placeholder="CVC" required />
+      </section>
+
+      <button type="submit">Run Task</button>
+    </form>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
