@@ -107,19 +107,19 @@ async function proceedToCheckout(page) {
 async function fillShippingInfo(page) {
   await page.waitForSelector('input[name="email"]');
   await page.type('input[name="email"]', "Meuser@gmail.com");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="firstName"]', "Muhammad");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="lastName"]', "Huda");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="address1"]', "724 Alder St");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="city"]', "Edmonds");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.select('select[name="zone"]', "WA");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="postalCode"]', "98020");
-  await new Promise((r) => setTimeout(r, 200));
+  await new Promise((r) => setTimeout(r, 500));
   await page.type('input[name="phone"]', "6513650822");
 }
 
