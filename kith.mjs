@@ -1,34 +1,230 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import RecaptchaPlugin from "puppeteer-extra-plugin-recaptcha";
+import dotenv from "dotenv";
 
-const run = async () => {
-  const productUrl =
-    "https://kith.com/collections/mens-footwear-sneakers/products/ai1203a607-105";
+dotenv.config();
 
-  const browser = await puppeteer.launch({
+// Use stealth plugin to avoid detection
+puppeteer.use(StealthPlugin());
+
+// Use recaptcha plugin with 2Captcha key from env
+puppeteer.use(
+  RecaptchaPlugin({
+    provider: {
+      id: "2captcha",
+      token: process.env.CAPTCHA_API_KEY,
+    },
+    visualFeedback: true,
+  })
+);
+
+function logStatus(message, level = "log") {
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-GB");
+  const prefix = `${time}`;
+  if (level === "log") {
+    console.log(`${prefix}: ${message}`);
+  } else if (level === "warn") {
+    console.warn(`${prefix}: ${message}`);
+  } else if (level === "error") {
+    console.error(`${prefix}: ${message}`);
+  }
+}
+
+function createTimer() {
+  const start = Date.now();
+  return () => ((Date.now() - start) / 1000).toFixed(2);
+}
+
+const {
+  PROXY_HOST: proxyHost,
+  PROXY_USER: proxyUser,
+  PROXY_PASS: proxyPass,
+
+  CARD_NUMBER: cardNumber,
+  CARD_EXPIRY: cardExpiry,
+  CARD_CVV: cardCVV,
+} = process.env;
+
+const targetUrl =
+  "https://kith.com/collections/mens-footwear-sneakers/products/ai1201a019-006";
+
+async function launchBrowser() {
+  return puppeteer.launch({
     headless: false,
+    args: proxyHost ? [`--proxy-server=${proxyHost}`] : [],
     defaultViewport: null,
   });
+}
 
+async function authenticateProxy(page) {
+  if (proxyUser && proxyPass) {
+    await page.authenticate({ username: proxyUser, password: proxyPass });
+  }
+}
+
+async function selectSize(page, sizeLabel = "6 US") {
+  await page.waitForSelector(".product-swatch__input:enabled + label", {
+    visible: true,
+  });
+
+  const result = await page.evaluate((label) => {
+    const labels = Array.from(
+      document.querySelectorAll(".product-swatch__input:enabled + label")
+    );
+
+    const cleanedLabel = label.trim().toLowerCase();
+
+    for (const l of labels) {
+      const text = l.innerText || l.textContent || "";
+      if (text.trim().toLowerCase() === cleanedLabel) {
+        l.click();
+        return true;
+      }
+    }
+    return false;
+  }, sizeLabel);
+
+  if (!result) {
+    logStatus(`Size "${sizeLabel}" not found or not clickable.`, "warn");
+  } else {
+    logStatus(`Size "${sizeLabel}" selected.`);
+  }
+
+  return result;
+}
+
+async function addToCart(page) {
+  await page.click("button[js-add-to-cart]");
+}
+
+async function proceedToCheckout(page) {
+  await page.waitForSelector("#CartDrawer-Checkout", { timeout: 10000 });
+  await page.click("#CartDrawer-Checkout");
+}
+
+async function fillShippingInfo(page) {
+  await page.waitForSelector('input[name="email"]');
+  await page.type('input[name="email"]', "Meuser@gmail.com");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="firstName"]', "Muhammad");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="lastName"]', "Huda");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="address1"]', "724 Alder St");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="city"]', "Edmonds");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.select('select[name="zone"]', "WA");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="postalCode"]', "98020");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.type('input[name="phone"]', "6513650822");
+}
+
+async function fillCardInfo(page) {
+  logStatus("Waiting for card info iframes to load...");
+
+  const cardNumberIframeSelector = 'iframe[name^="card-fields-number"]';
+  await page.waitForSelector(cardNumberIframeSelector, { timeout: 20000 });
+  const cardNumberFrame = await (
+    await page.$(cardNumberIframeSelector)
+  ).contentFrame();
+  await cardNumberFrame.waitForSelector('input[name="number"]', {
+    timeout: 5000,
+  });
+  await cardNumberFrame.type(
+    'input[name="number"]',
+    cardNumber || "4242 4242 4242 8529"
+  );
+  logStatus("Card number filled");
+
+  const expiryIframeSelector = 'iframe[name^="card-fields-expiry"]';
+  await page.waitForSelector(expiryIframeSelector, { timeout: 10000 });
+  const expiryFrame = await (await page.$(expiryIframeSelector)).contentFrame();
+  await expiryFrame.waitForSelector('input[name="expiry"]', { timeout: 5000 });
+  await expiryFrame.type('input[name="expiry"]', cardExpiry || "04 / 28");
+  logStatus("Expiry date filled");
+
+  const cvvIframeSelector = 'iframe[name^="card-fields-verification_value"]';
+  await page.waitForSelector(cvvIframeSelector, { timeout: 10000 });
+  const cvvFrame = await (await page.$(cvvIframeSelector)).contentFrame();
+  await cvvFrame.waitForSelector('input[name="verification_value"]', {
+    timeout: 5000,
+  });
+  await cvvFrame.type('input[name="verification_value"]', cardCVV || "907");
+  logStatus("CVV filled");
+}
+
+async function run() {
+  const browser = await launchBrowser();
   const page = await browser.newPage();
+  await authenticateProxy(page);
+
+  const getElapsed = createTimer();
 
   try {
-    console.log("Navigating to Kith product page...");
-    await page.goto(productUrl, { waitUntil: "networkidle2" });
+    await page.goto(targetUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
 
-    await page.waitForSelector("h1.product__title", { timeout: 10000 });
+    if (await selectSize(page)) {
+      logStatus("Adding item to cart...");
+      await addToCart(page);
 
-    const title = await page.$eval("h1.product__title", (el) =>
-      el.textContent.trim()
-    );
-    console.log("Product Title:", title);
+      logStatus("Going to checkout page...");
+      await Promise.all([
+        page.waitForNavigation({
+          waitUntil: "domcontentloaded",
+          timeout: 60000,
+        }),
+        proceedToCheckout(page),
+      ]);
 
-    await page.screenshot({ path: "./screenshots/kith-product.png" });
-    console.log("Screenshot saved in screenshots folder.");
+      logStatus("Submitting address...");
+      await fillShippingInfo(page);
+
+      logStatus("Filling card details...");
+      await fillCardInfo(page);
+
+      logStatus("Solving hCaptcha...");
+      const { error, solutions } = await page.solveRecaptchas();
+
+      if (error) {
+        logStatus(`Error solving captcha: ${error}`, "error");
+      } else {
+        logStatus(`Captcha solved`);
+      }
+
+      logStatus("Submitting payment info...");
+      await page.waitForSelector("#checkout-pay-button", {
+        visible: true,
+        timeout: 10000,
+      });
+      await page.click("#checkout-pay-button");
+
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector("#checkout-pay-button")
+            ?.innerText.toLowerCase()
+            .includes("processing"),
+        { timeout: 10000 }
+      );
+
+      const totalTime = getElapsed();
+      logStatus(`Task Speed: ${totalTime} seconds...`);
+      logStatus("Script finished.");
+    } else {
+      logStatus("Size 6 US not found or not available.", "warn");
+    }
   } catch (error) {
-    console.error("Error loading product:", error.message);
+    logStatus(`Error during automation: ${error}`, "error");
   } finally {
     await browser.close();
   }
-};
+}
 
 run();

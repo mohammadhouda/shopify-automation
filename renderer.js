@@ -1,7 +1,7 @@
 const form = document.getElementById("checkoutForm");
 const statusContainer = document.createElement("div");
-statusContainer.style =
-  "white-space: pre-wrap; margin-top: 20px; background: #f0f0f0; padding: 10px; height: 150px; overflow-y: auto;";
+statusContainer.className = "status-container";
+statusContainer.style.whiteSpace = "pre-line"; // Allow new lines
 document.body.appendChild(statusContainer);
 
 form.addEventListener("submit", async (e) => {
@@ -27,7 +27,7 @@ form.addEventListener("submit", async (e) => {
     },
   };
 
-  statusContainer.textContent = ""; // Clear old statuses
+  statusContainer.textContent = ""; // Clear old logs
 
   const result = await window.electronAPI.startAutomation(formData);
 
@@ -39,6 +39,6 @@ form.addEventListener("submit", async (e) => {
 });
 
 window.electronAPI.onStatusUpdate((event, message) => {
-  statusContainer.textContent += message + "\n";
+  statusContainer.textContent += `${message}\n`;
   statusContainer.scrollTop = statusContainer.scrollHeight;
 });

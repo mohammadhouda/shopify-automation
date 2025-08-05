@@ -57,3 +57,14 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+
+.status-container {
+  margin-top: 25px;
+  padding: 15px 20px;
+  background-color: #e9f7ef;
+  border: 1px solid #b7e4c7;
+  border-radius: 6px;
+  color: #256029;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.07);
+}

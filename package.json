@@ -11,9 +11,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "2captcha": "^3.0.5-2",
+    "axios": "^1.11.0",
     "dotenv": "^17.2.1",
+    "node-fetch": "^3.3.2",
     "puppeteer": "^24.15.0",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-proxy": "^1.0.2",
+    "puppeteer-extra-plugin-recaptcha": "^3.6.8",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "readline-sync": "^1.4.10"
   },
