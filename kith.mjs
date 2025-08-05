@@ -3,12 +3,13 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import RecaptchaPlugin from "puppeteer-extra-plugin-recaptcha";
 import dotenv from "dotenv";
 
+// Load environment variables from .env file
 dotenv.config();
 
-// Use stealth plugin to avoid detection
+// Use stealth plugin to avoid detection by anti-bot systems
 puppeteer.use(StealthPlugin());
 
-// Use recaptcha plugin with 2Captcha key from env
+// Use recaptcha plugin with 2Captcha key from env for captcha solving
 puppeteer.use(
   RecaptchaPlugin({
     provider: {
@@ -19,6 +20,7 @@ puppeteer.use(
   })
 );
 
+// Utility function for logging with timestamps and log levels
 function logStatus(message, level = "log") {
   const now = new Date();
   const time = now.toLocaleTimeString("en-GB");
@@ -32,11 +34,13 @@ function logStatus(message, level = "log") {
   }
 }
 
+// Returns a function to get elapsed time in seconds since creation
 function createTimer() {
   const start = Date.now();
   return () => ((Date.now() - start) / 1000).toFixed(2);
 }
 
+// Extract proxy and card info from environment variables
 const {
   PROXY_HOST: proxyHost,
   PROXY_USER: proxyUser,
@@ -47,9 +51,11 @@ const {
   CARD_CVV: cardCVV,
 } = process.env;
 
+// Product page URL to automate
 const targetUrl =
   "https://kith.com/collections/mens-footwear-sneakers/products/ai1201a019-006";
 
+// Launches a new browser instance, optionally with a proxy
 async function launchBrowser() {
   return puppeteer.launch({
     headless: false,
@@ -58,17 +64,20 @@ async function launchBrowser() {
   });
 }
 
+// Authenticates proxy if credentials are provided
 async function authenticateProxy(page) {
   if (proxyUser && proxyPass) {
     await page.authenticate({ username: proxyUser, password: proxyPass });
   }
 }
 
+// Selects a shoe size by label (e.g., "6 US")
 async function selectSize(page, sizeLabel = "6 US") {
   await page.waitForSelector(".product-swatch__input:enabled + label", {
     visible: true,
   });
 
+  // Find and click the label matching the desired size
   const result = await page.evaluate((label) => {
     const labels = Array.from(
       document.querySelectorAll(".product-swatch__input:enabled + label")
@@ -95,15 +104,18 @@ async function selectSize(page, sizeLabel = "6 US") {
   return result;
 }
 
+// Clicks the "Add to Cart" button
 async function addToCart(page) {
   await page.click("button[js-add-to-cart]");
 }
 
+// Proceeds to checkout from the cart drawer
 async function proceedToCheckout(page) {
   await page.waitForSelector("#CartDrawer-Checkout", { timeout: 10000 });
   await page.click("#CartDrawer-Checkout");
 }
 
+// Fills out shipping information on the checkout page
 async function fillShippingInfo(page) {
   await page.waitForSelector('input[name="email"]');
   await page.type('input[name="email"]', "Meuser@gmail.com");
@@ -123,9 +135,11 @@ async function fillShippingInfo(page) {
   await page.type('input[name="phone"]', "6513650822");
 }
 
+// Fills out credit card information inside iframes
 async function fillCardInfo(page) {
   logStatus("Waiting for card info iframes to load...");
 
+  // Card number iframe and input
   const cardNumberIframeSelector = 'iframe[name^="card-fields-number"]';
   await page.waitForSelector(cardNumberIframeSelector, { timeout: 20000 });
   const cardNumberFrame = await (
@@ -140,6 +154,7 @@ async function fillCardInfo(page) {
   );
   logStatus("Card number filled");
 
+  // Expiry date iframe and input
   const expiryIframeSelector = 'iframe[name^="card-fields-expiry"]';
   await page.waitForSelector(expiryIframeSelector, { timeout: 10000 });
   const expiryFrame = await (await page.$(expiryIframeSelector)).contentFrame();
@@ -147,6 +162,7 @@ async function fillCardInfo(page) {
   await expiryFrame.type('input[name="expiry"]', cardExpiry || "04 / 28");
   logStatus("Expiry date filled");
 
+  // CVV iframe and input
   const cvvIframeSelector = 'iframe[name^="card-fields-verification_value"]';
   await page.waitForSelector(cvvIframeSelector, { timeout: 10000 });
   const cvvFrame = await (await page.$(cvvIframeSelector)).contentFrame();
@@ -157,6 +173,7 @@ async function fillCardInfo(page) {
   logStatus("CVV filled");
 }
 
+// Main automation flow
 async function run() {
   const browser = await launchBrowser();
   const page = await browser.newPage();
@@ -165,11 +182,13 @@ async function run() {
   const getElapsed = createTimer();
 
   try {
+    // Go to product page
     await page.goto(targetUrl, {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
 
+    // Select size and continue if available
     if (await selectSize(page)) {
       logStatus("Adding item to cart...");
       await addToCart(page);
@@ -189,6 +208,7 @@ async function run() {
       logStatus("Filling card details...");
       await fillCardInfo(page);
 
+      // Solve captcha if present
       logStatus("Solving hCaptcha...");
       const { error, solutions } = await page.solveRecaptchas();
 
@@ -198,6 +218,7 @@ async function run() {
         logStatus(`Captcha solved`);
       }
 
+      // Submit payment
       logStatus("Submitting payment info...");
       await page.waitForSelector("#checkout-pay-button", {
         visible: true,
@@ -205,6 +226,7 @@ async function run() {
       });
       await page.click("#checkout-pay-button");
 
+      // Wait for processing state
       await page.waitForFunction(
         () =>
           document
@@ -214,6 +236,7 @@ async function run() {
         { timeout: 10000 }
       );
 
+      // Log total time taken
       const totalTime = getElapsed();
       logStatus(`Task Speed: ${totalTime} seconds...`);
       logStatus("Script finished.");
@@ -227,4 +250,5 @@ async function run() {
   }
 }
 
+// Start the automation
 run();
