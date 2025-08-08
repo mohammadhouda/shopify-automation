@@ -60,22 +60,24 @@ Here are some common challenges encountered during e-commerce automation and the
 
 Open your terminal and run the following commands to clone the repository and navigate into the project directory:
 
-bash
+```bash
 git clone [https://github.com/your-username/shopify-checkout-automation.git](https://github.com/your-username/shopify-checkout-automation.git)
 cd shopify-checkout-automation
+```
 
 ### 2. instal Dependencies
 
 Install the necessary Node.js packages by running:
 
-bash
+```bash
 npm install
+```
 
 ### 3. Create .env file
 
 Create a file named .env in the root of the project and add your configuration details. This file will store sensitive information like API keys and personal data.
 
-bash
+```bash
 
 # Proxy settings for location spoofing
 
@@ -93,22 +95,25 @@ CARD_NAME=John Doe
 CARD_NUMBER=4242424242424242
 EXPIRY=12/30
 CVV=123
+```
 
 ## Usage
 
 ### To start the automation script, simply run:
 
-bash
+```bash
 node kith.mjs
+```
 
 ### To start the automation script on shopnicekicks, simply run:
 
-bash
+```bash
 npm start
+```
 
 ### Your terminal will display real-time progress of the checkout process, similar to the following:
 
-bash
+```bash
 16:08:18: Adding item to cart...
 16:08:21: Going to checkout page...
 16:08:22: Submitting address...
@@ -118,6 +123,7 @@ bash
 16:08:27: Submitting payment...
 16:08:29: Total price: 34.11...
 16:08:30: Task Speed: 10.96 seconds...
+```
 
 ## Technologies Used
 
