@@ -1,14 +1,14 @@
 # Shopify Checkout Automation with Puppeteer
 
-This project automates the full checkout process on Shopify websites using _Node.js, **Puppeteer, **2Captcha_ (for hCaptcha solving), and _Oxylabs US proxy_. It simulates a user journey from product selection to final purchase with support for address autofill, proxy routing, and captcha solving.
+This project automates the full checkout process on Shopify websites using _Node.js, **Puppeteer**, **2Captcha** (for hCaptcha solving), and **Oxylabs US proxy**. It simulates a user journey from product selection to final purchase with support for address autofill, proxy routing, and captcha solving.
 
 ---
 
 ## Features
 
 - Full automation: product selection, add to cart, checkout, address fill, shipping selection, and payment form fill.
-- Solves _hCaptcha_ automatically using _2Captcha API_ (for Kith).
-- Supports _US proxy_ (Oxylabs) to bypass country restrictions (for Kith).
+- Solves hCaptcha automatically using 2Captcha API (for Kith).
+- Supports US proxy (Oxylabs) to bypass country restrictions (for Kith).
 - Task speed logging and status updates.
 - Works even with Shopify’s bot protections.
 - UI support using Electron (for ShopNiceKicks).
