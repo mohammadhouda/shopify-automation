@@ -4,12 +4,12 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "kith": "node kith.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Puppeteer-based Shopify checkout automation with stealth, proxy, and captcha solving.",
   "dependencies": {
     "2captcha": "^3.0.5-2",
     "axios": "^1.11.0",

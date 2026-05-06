@@ -1,13 +1,19 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   background-color: #f2f4f7;
   margin: 0;
-  padding: 0;
+  padding: 20px 0;
 }
 
 .container {
-  max-width: 500px;
-  margin: 40px auto;
+  max-width: 520px;
+  margin: 0 auto;
   padding: 30px;
   background-color: #ffffff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -17,54 +23,76 @@ body {
 h1 {
   text-align: center;
   color: #333;
+  margin: 0 0 8px;
 }
 
 h2 {
-  margin-top: 30px;
+  margin: 28px 0 8px;
   color: #555;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 6px;
 }
 
-form input {
+label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: #444;
+  font-weight: 600;
+}
+
+input {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
+  padding: 9px 11px;
+  margin-top: 4px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  box-sizing: border-box;
-  transition: border 0.2s ease;
+  font-size: 0.93rem;
+  transition: border-color 0.15s;
 }
 
-form input:focus {
+input:focus {
   border-color: #007bff;
   outline: none;
 }
 
-button {
+button[type="submit"] {
   width: 100%;
   padding: 12px;
+  margin-top: 24px;
   background-color: #007bff;
-  color: white;
-  font-size: 16px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 25px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s;
 }
 
-button:hover {
+button[type="submit"]:hover:not(:disabled) {
   background-color: #0056b3;
 }
 
-.status-container {
-  margin-top: 25px;
-  padding: 15px 20px;
-  background-color: #e9f7ef;
-  border: 1px solid #b7e4c7;
+button[type="submit"]:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.status-log {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background-color: #1a1a2e;
   border-radius: 6px;
-  color: #256029;
-  font-size: 15px;
-  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.07);
+  color: #a8e6a3;
+  font-family: "Courier New", monospace;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+  line-height: 1.5;
 }

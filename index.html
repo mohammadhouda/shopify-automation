@@ -2,41 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Checkout Bot Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout Bot</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Checkout Bot Setup</h1>
-    <form id="checkoutForm">
+    <h1>Checkout Bot</h1>
+    <form id="checkoutForm" novalidate>
+
       <section>
-        <h2>Product Details</h2>
-        <input type="text" name="productUrl" placeholder="Product URL" required />
-        <input type="text" name="shoeSize" placeholder="Shoe Size" required />
+        <h2>Product</h2>
+        <label for="productUrl">Product URL</label>
+        <input id="productUrl" type="url" name="productUrl"
+          placeholder="https://..." autocomplete="off" required />
+
+        <label for="shoeSize">Shoe Size</label>
+        <input id="shoeSize" type="text" name="shoeSize"
+          placeholder="e.g. 10" autocomplete="off" required />
       </section>
 
       <section>
-        <h2>Shipping Info</h2>
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="text" name="firstName" placeholder="First Name" required />
-        <input type="text" name="lastName" placeholder="Last Name" required />
-        <input type="text" name="address1" placeholder="Address Line 1" required />
-        <input type="text" name="city" placeholder="City" required />
-        <input type="text" name="state" placeholder="State (e.g. CA)" required />
-        <input type="text" name="zip" placeholder="ZIP Code" required />
-        <input type="text" name="phone" placeholder="Phone Number" required />
+        <h2>Shipping</h2>
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email"
+          placeholder="you@example.com" autocomplete="email" required />
+
+        <label for="firstName">First Name</label>
+        <input id="firstName" type="text" name="firstName"
+          autocomplete="given-name" required />
+
+        <label for="lastName">Last Name</label>
+        <input id="lastName" type="text" name="lastName"
+          autocomplete="family-name" required />
+
+        <label for="address1">Address</label>
+        <input id="address1" type="text" name="address1"
+          autocomplete="address-line1" required />
+
+        <label for="city">City</label>
+        <input id="city" type="text" name="city"
+          autocomplete="address-level2" required />
+
+        <label for="state">State</label>
+        <input id="state" type="text" name="state"
+          placeholder="e.g. CA" maxlength="2" autocomplete="address-level1" required />
+
+        <label for="zip">ZIP Code</label>
+        <input id="zip" type="text" name="zip"
+          placeholder="12345" maxlength="10" autocomplete="postal-code" required />
+
+        <label for="phone">Phone</label>
+        <input id="phone" type="tel" name="phone"
+          autocomplete="tel" required />
       </section>
 
       <section>
-        <h2>Card Info</h2>
-        <input type="text" name="cardNumber" placeholder="Card Number" required />
-        <input type="text" name="expiry" placeholder="Expiry (MM / YY)" required />
-        <input type="text" name="cvc" placeholder="CVC" required />
+        <h2>Payment</h2>
+        <label for="cardNumber">Card Number</label>
+        <input id="cardNumber" type="text" name="cardNumber"
+          placeholder="•••• •••• •••• ••••" maxlength="19"
+          autocomplete="cc-number" required />
+
+        <label for="expiry">Expiry</label>
+        <input id="expiry" type="text" name="expiry"
+          placeholder="MM / YY" maxlength="7" autocomplete="cc-exp" required />
+
+        <label for="cvc">CVC</label>
+        <input id="cvc" type="text" name="cvc"
+          placeholder="•••" maxlength="4" autocomplete="cc-csc" required />
       </section>
 
-      <button type="submit">Run Task</button>
+      <button type="submit" id="submitBtn">Run Task</button>
     </form>
+
+    <div id="statusLog" class="status-log" hidden></div>
   </div>
 
   <script src="renderer.js"></script>

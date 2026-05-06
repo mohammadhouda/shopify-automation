@@ -1,5 +1,11 @@
 import puppeteer from "puppeteer";
-import fs from "fs";
+import fs from "fs/promises";
+
+const STEP_DELAY = 400;
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function runAutomation(
   { productUrl, shoeSize, checkoutInfo, cardInfo },
@@ -9,9 +15,7 @@ export async function runAutomation(
     const t = new Date().toTimeString().split(" ")[0];
     const statusMsg = `${t}: ${msg}`;
     console.log(statusMsg);
-    if (event) {
-      event.sender.send("status-update", statusMsg);
-    }
+    event?.sender.send("status-update", statusMsg);
   };
 
   async function selectShoeSize(page, size) {
@@ -32,14 +36,13 @@ export async function runAutomation(
       visible: true,
       timeout: 10000,
     });
-    await page.evaluate((btn) => btn.click(), btn);
-    await new Promise((res) => setTimeout(res, 2000));
+    await btn.click();
+    await sleep(2000);
   }
 
   async function goToCheckout(page) {
-    await page.goto("https://shopnicekicks.com/cart", {
-      waitUntil: "networkidle2",
-    });
+    const origin = new URL(productUrl).origin;
+    await page.goto(`${origin}/cart`, { waitUntil: "networkidle2" });
     await page.waitForSelector('button[name="checkout"]', {
       visible: true,
       timeout: 10000,
@@ -49,16 +52,24 @@ export async function runAutomation(
   }
 
   async function fillShipping(page, info) {
-    await page.type('input[name="email"]', info.email);
-    await page.type('input[name="firstName"]', info.firstName);
-    await page.type('input[name="lastName"]', info.lastName);
-    await page.type('input[name="address1"]', info.address1);
-    await page.type('input[name="city"]', info.city);
+    const fields = [
+      ['input[name="email"]', info.email],
+      ['input[name="firstName"]', info.firstName],
+      ['input[name="lastName"]', info.lastName],
+      ['input[name="address1"]', info.address1],
+      ['input[name="city"]', info.city],
+      ['input[name="postalCode"]', info.zip],
+      ['input[name="phone"]', info.phone],
+    ];
+
+    for (const [selector, value] of fields) {
+      await page.type(selector, value);
+      await sleep(STEP_DELAY);
+    }
+
     await page.select('select[name="countryCode"]', "US");
     await page.waitForSelector('select[name="zone"]', { timeout: 10000 });
     await page.select('select[name="zone"]', info.state);
-    await page.type('input[name="postalCode"]', info.zip);
-    await page.type('input[name="phone"]', info.phone);
   }
 
   async function fillCardField(page, iframeSrcContains, inputName, value) {
@@ -67,22 +78,17 @@ export async function runAutomation(
       { timeout: 10000 }
     );
     const frame = await iframeHandle.contentFrame();
-    if (!frame) throw new Error(`Could not access iframe ${iframeSrcContains}`);
+    if (!frame) throw new Error(`Could not access iframe: ${iframeSrcContains}`);
     const input = await frame.waitForSelector(`input[name="${inputName}"]`, {
       timeout: 20000,
     });
     await input.type(value);
   }
 
-  async function fillPayment(page, cardInfo) {
-    await fillCardField(page, "number-ltr", "number", cardInfo.number);
-    await fillCardField(page, "expiry-ltr", "expiry", cardInfo.expiry);
-    await fillCardField(
-      page,
-      "verification_value-ltr",
-      "verification_value",
-      cardInfo.cvc
-    );
+  async function fillPayment(page, card) {
+    await fillCardField(page, "number-ltr", "number", card.number);
+    await fillCardField(page, "expiry-ltr", "expiry", card.expiry);
+    await fillCardField(page, "verification_value-ltr", "verification_value", card.cvc);
   }
 
   async function agreeTerms(page) {
@@ -92,26 +98,22 @@ export async function runAutomation(
       );
       if (el) el.click();
     });
-    await new Promise((res) => setTimeout(res, 1000));
+    await sleep(1000);
   }
 
   async function submitPayment(page) {
-    const payButtonSelector = "#checkout-pay-button";
-    await page.waitForSelector(payButtonSelector, {
+    await page.waitForSelector("#checkout-pay-button", {
       visible: true,
       timeout: 20000,
     });
-    await page.click(payButtonSelector);
+    await page.click("#checkout-pay-button");
     await page.waitForSelector('progress[aria-label="Processing…"]', {
       timeout: 60000,
     });
   }
 
   const start = Date.now();
-  const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: null,
-  });
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
   const page = await browser.newPage();
 
   try {
@@ -122,11 +124,14 @@ export async function runAutomation(
 
     const isSoldOut = await page
       .$eval("body", (body) => {
-        const btn = body.querySelector("button[name='add'][disabled]");
-        if (btn?.innerText.toLowerCase().includes("sold out")) return true;
-        return !!body.querySelector(
-          ".product-form-info-container span.sold_out"
-        );
+        if (
+          body
+            .querySelector("button[name='add'][disabled]")
+            ?.innerText.toLowerCase()
+            .includes("sold out")
+        )
+          return true;
+        return !!body.querySelector(".product-form-info-container span.sold_out");
       })
       .catch(() => false);
 
@@ -155,18 +160,16 @@ export async function runAutomation(
 
     setStatus("Payment processing...");
 
-    const priceText = await page.$eval(
-      "strong._19gi7yt0",
-      (el) => el.textContent
-    );
+    const priceText = await page
+      .$eval("strong._19gi7yt0", (el) => el.textContent)
+      .catch(() => "unknown");
     setStatus(`Total price: ${priceText}`);
   } catch (err) {
-    console.error("Error:", err.message);
-    fs.writeFileSync("debug.html", await page.content());
+    setStatus(`Error: ${err.message}`);
+    await fs.writeFile("debug.html", await page.content()).catch(() => {});
   } finally {
-    setStatus(
-      `Task Speed: ${((Date.now() - start) / 1000).toFixed(2)} seconds...`
-    );
+    setStatus(`Task Speed: ${((Date.now() - start) / 1000).toFixed(2)} seconds...`);
     setStatus("Script finished.");
+    await browser.close();
   }
 }

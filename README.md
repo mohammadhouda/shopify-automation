@@ -1,140 +1,156 @@
-# Shopify Checkout Automation with Puppeteer
+# Shopify Checkout Automation
 
-This project automates the full checkout process on Shopify websites using _Node.js, **Puppeteer**, **2Captcha** (for hCaptcha solving), and **Oxylabs US proxy**. It simulates a user journey from product selection to final purchase with support for address autofill, proxy routing, and captcha solving.
-
----
-
-## Features
-
-- Full automation: product selection, add to cart, checkout, address fill, shipping selection, and payment form fill.
-- Solves hCaptcha automatically using 2Captcha API (for Kith).
-- Supports US proxy (Oxylabs) to bypass country restrictions (for Kith).
-- Task speed logging and status updates.
-- Works even with Shopify’s bot protections.
-- UI support using Electron (for ShopNiceKicks).
-
----
-
-## How It Works
-
-plaintext
-
-1. Launch Puppeteer with US Proxy (Oxylabs)
-2. Visit product page
-3. Add product to cart
-4. Navigate to checkout
-5. Fill shipping information
-6. Solve hCaptcha (via 2Captcha)
-7. Fill payment form
-8. Submit and log total time
+Puppeteer-based checkout bot with two independent flows targeting Shopify storefronts. Features stealth mode, hCaptcha solving via 2Captcha, optional proxy routing, and an Electron desktop GUI.
 
 ---
 
 ## Automation Targets
 
-This project contains _two separate automation flows_:
-
-| Target Site       | Captcha Solving | Proxy Needed  | UI Support      |
-| ----------------- | --------------- | ------------- | --------------- |
-| kith.com          | ✅ 2Captcha     | ✅ Oxylabs    | ❌              |
-| shopnicekicks.com | ❌ Not needed   | ❌ Not needed | ✅ Electron GUI |
+| Target | Entry Point | Captcha | Proxy | Interface |
+|---|---|---|---|---|
+| [kith.com](https://kith.com) | `kith.mjs` | 2Captcha (hCaptcha) | Oxylabs (optional) | CLI |
+| [shopnicekicks.com](https://shopnicekicks.com) | `automation.mjs` | None | None | Electron GUI |
 
 ---
 
-# Overcoming E-commerce Automation Challenges
+## How It Works
 
-Here are some common challenges encountered during e-commerce automation and the solutions used to overcome them.
+### kith.mjs (CLI)
 
-| Challenge                             | Solution                                                                                                                                       |
-| :------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| Item not shipping to Lebanon          | Used Oxylabs US proxy to spoof a US location, enabling access to US-only shipping options.                                                     |
-| Shopify checkout page loads slowly    | Delayed automation until the **DOMContentLoaded** event instead of the load event, which significantly improved performance and reliability.   |
-| hCaptcha blocks automation            | Integrated the _2Captcha API_ to solve hCaptcha challenges dynamically.                                                                        |
-| No sitekey for captcha                | Used an _interactive element injection method_ instead of relying on a sitekey, allowing the script to handle captchas without a specific key. |
-| Card input fields inside a Shadow DOM | Accessed the fields using **page.evaluateHandle()** in conjunction with native querySelector techniques to bypass the Shadow DOM.              |
-| Address form required US ZIP/State    | Used dummy US addresses for compatibility with the checkout form, ensuring a smooth and uninterrupted process.                                 |
+1. Validates all required environment variables on startup
+2. Launches Puppeteer with stealth plugin and optional proxy
+3. Navigates to the configured product page
+4. Selects the configured shoe size from available swatches
+5. Adds to cart and proceeds to checkout
+6. Fills shipping and payment fields from env vars
+7. Solves hCaptcha via the 2Captcha API
+8. Submits payment and logs total elapsed time
 
-## Setup Instructions
+### Electron GUI (shopnicekicks)
 
-### 1. Clone the Project
+1. User fills in product URL, size, shipping, and card details via a desktop form
+2. Clicks **Run Task**
+3. Puppeteer drives the full checkout flow in a visible browser window
+4. Status messages stream into the UI in real time
 
-Open your terminal and run the following commands to clone the repository and navigate into the project directory:
+---
+
+## Challenges & Solutions
+
+| Challenge | Solution |
+|---|---|
+| Item not shipping to Lebanon | Oxylabs US proxy to spoof location |
+| Shopify checkout loads slowly | Wait on `domcontentloaded` instead of `load` event |
+| hCaptcha blocks automation | 2Captcha API for dynamic challenge solving |
+| No captcha sitekey available | Interactive element injection instead of sitekey lookup |
+| Card fields are inside iframes | `contentFrame()` with scoped input selectors |
+| US ZIP/state required at checkout | Fully configurable via `.env` shipping fields |
+
+---
+
+## Setup
+
+### 1. Clone
 
 ```bash
-git clone [https://github.com/your-username/shopify-checkout-automation.git](https://github.com/your-username/shopify-checkout-automation.git)
-cd shopify-checkout-automation
+git clone https://github.com/your-username/shopify-automation.git
+cd shopify-automation
 ```
 
-### 2. instal Dependencies
-
-Install the necessary Node.js packages by running:
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Create .env file
+### 3. Configure `.env`
 
-Create a file named .env in the root of the project and add your configuration details. This file will store sensitive information like API keys and personal data.
+Create a `.env` file in the project root. All fields listed under **Required** must be present for `kith.mjs` to start.
 
-```bash
-
-# Proxy settings for location spoofing
-
-PROXY_HOST=your api_host
-PROXY_USER=your api_user
-PROXY_PASS=your api_pass
-
-# 2Captcha API key
-
+```env
+# --- 2Captcha (required) ---
 CAPTCHA_API_KEY=your_2captcha_api_key
 
-# Payment card details
+# --- Proxy (optional — omit all three to run without proxy) ---
+PROXY_HOST=host:port
+PROXY_USER=your_proxy_username
+PROXY_PASS=your_proxy_password
 
-CARD_NAME=John Doe
+# --- Target product (optional — defaults shown below) ---
+TARGET_URL=https://kith.com/collections/mens-footwear-sneakers/products/sl47581100
+SHOE_SIZE=5.5 US
+
+# --- Shipping info (required) ---
+SHIPPING_EMAIL=you@example.com
+SHIPPING_FIRST=John
+SHIPPING_LAST=Doe
+SHIPPING_ADDRESS=123 Main St
+SHIPPING_CITY=Seattle
+SHIPPING_STATE=WA
+SHIPPING_ZIP=98101
+SHIPPING_PHONE=2065551234
+
+# --- Payment card (required) ---
 CARD_NUMBER=4242424242424242
-EXPIRY=12/30
-CVV=123
+CARD_EXPIRY=04/28
+CARD_CVV=123
 ```
+
+---
 
 ## Usage
 
-### To start the automation script, simply run:
+### kith.com — CLI
 
 ```bash
+npm run kith
+# or
 node kith.mjs
 ```
 
-### To start the automation script on shopnicekicks, simply run:
+Terminal output:
+
+```
+16:08:18: Navigating to product page...
+16:08:20: Size "10 US" selected.
+16:08:21: Adding item to cart...
+16:08:22: Proceeding to checkout...
+16:08:24: Filling shipping info...
+16:08:26: Filling card details...
+16:08:27: Solving hCaptcha...
+16:08:29: Captcha solved.
+16:08:30: Submitting payment...
+16:08:31: Completed in 13.42s.
+```
+
+If a required env var is missing the script exits immediately with a clear error:
+
+```
+Missing required env vars: CAPTCHA_API_KEY, CARD_CVV
+```
+
+### shopnicekicks.com — Electron GUI
 
 ```bash
 npm start
 ```
 
-### Your terminal will display real-time progress of the checkout process, similar to the following:
+Fill in the form and click **Run Task**. The browser opens automatically and status lines stream into the log panel in real time.
 
-```bash
-16:08:18: Adding item to cart...
-16:08:21: Going to checkout page...
-16:08:22: Submitting address...
-16:08:24: Submitting shipping rate...
-16:08:25: Calculating taxes…
-16:08:27: Filling card details...
-16:08:27: Submitting payment...
-16:08:29: Total price: 34.11...
-16:08:30: Task Speed: 10.96 seconds...
-```
+---
 
-## Technologies Used
+## Tech Stack
 
-plaintext
+- [puppeteer-extra](https://github.com/berstend/puppeteer-extra) — Puppeteer with plugin support
+- [puppeteer-extra-plugin-stealth](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth) — Anti-bot-detection evasion
+- [puppeteer-extra-plugin-recaptcha](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-recaptcha) — hCaptcha solving via 2Captcha
+- [2Captcha](https://2captcha.com/) — Captcha solving service
+- [Oxylabs](https://oxylabs.io/) — US residential proxy
+- [Electron](https://www.electronjs.org/) — Desktop GUI (shopnicekicks flow)
+- [dotenv](https://github.com/motdotla/dotenv) — Environment variable loading
 
-1. Puppeteer
-2. 2Captcha
-3. Oxylabs Proxy
-4. Node.js
-5. Electron (for shopnicekicks)
+---
 
 ## Disclaimer
 
-This automation is built for educational and testing purposes only. Misusing automation scripts on live eCommerce platforms may violate their terms of service.
+This project is built for educational and personal testing purposes only. Automating checkout flows on live e-commerce platforms may violate their Terms of Service. Use responsibly.
